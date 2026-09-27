@@ -5,12 +5,10 @@ public static class ScanEngine
 {
     public static IReadOnlyList<SpaceEntry> Scan(string root, CancellationToken cancellationToken = default, IProgress<SpaceEntry>? progress = null)
     {
-        if (!Directory.Exists(root)) throw new DirectoryNotFoundException(root); var results = new List<SpaceEntry>();
-        foreach (var path in Directory.EnumerateFileSystemEntries(root, "*", SearchOption.AllDirectories))
-        {
-            cancellationToken.ThrowIfCancellationRequested(); try { var info = File.GetAttributes(path); if ((info & FileAttributes.ReparsePoint) != 0) continue; var bytes = (info & FileAttributes.Directory) != 0 ? Directory.EnumerateFiles(path, "*", SearchOption.AllDirectories).Sum(SafeLength) : new FileInfo(path).Length; var entry = new SpaceEntry(path, bytes, (info & FileAttributes.Directory) != 0); results.Add(entry); progress?.Report(entry); } catch (UnauthorizedAccessException) { }
-        }
-        return results.OrderByDescending(x => x.Bytes).ToArray();
+        if (!Directory.Exists(root)) throw new DirectoryNotFoundException(root); var files = new List<(string Path, long Bytes)>();
+        foreach (var path in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories)) { cancellationToken.ThrowIfCancellationRequested(); try { var info = new FileInfo(path); if ((info.Attributes & FileAttributes.ReparsePoint) != 0) continue; files.Add((path, info.Length)); progress?.Report(new SpaceEntry(path, info.Length, false)); } catch (UnauthorizedAccessException) { } }
+        var result = files.Select(x => new SpaceEntry(x.Path, x.Bytes, false)).ToList(); var directories = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
+        foreach (var file in files) { var current = Directory.GetParent(file.Path)?.FullName; while (current is not null && current.StartsWith(Path.GetFullPath(root), StringComparison.OrdinalIgnoreCase)) { directories[current] = directories.GetValueOrDefault(current) + file.Bytes; current = Directory.GetParent(current)?.FullName; } }
+        result.AddRange(directories.Select(x => new SpaceEntry(x.Key, x.Value, true))); return result.OrderByDescending(x => x.Bytes).ToArray();
     }
-    private static long SafeLength(string path) { try { return new FileInfo(path).Length; } catch { return 0; } }
 }
