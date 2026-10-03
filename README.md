@@ -4,4 +4,6 @@ OpenSpace is a read-only, local-first Windows storage analyzer. It scans a chose
 
 Version 1.0 uses a fault-tolerant directory walker: inaccessible entries and reparse points are reported and skipped instead of aborting the entire scan. Directory totals use boundary-safe path checks, and detailed results include scanned-file counts, total bytes, progress events, and skipped-item evidence.
 
+Version 1.1 brings that evidence into the desktop interface. Each completed scan now distinguishes complete coverage from scans with inaccessible or reparse-point paths, shows exact file and folder counts, and exposes the first skipped-path details in the warning tooltip.
+
 MIT licensed.
