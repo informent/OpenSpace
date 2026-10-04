@@ -25,7 +25,15 @@ public static class ScanEngine
             cancellationToken.ThrowIfCancellationRequested();
             var directory = pending.Pop();
             IEnumerable<string> children;
-            try { children = Directory.EnumerateFileSystemEntries(directory).ToArray(); }
+            try
+            {
+                if ((File.GetAttributes(directory) & FileAttributes.ReparsePoint) != 0)
+                {
+                    issues.Add(new ScanIssue(directory, "Skipped reparse point"));
+                    continue;
+                }
+                children = Directory.EnumerateFileSystemEntries(directory).ToArray();
+            }
             catch (Exception ex) when (ex is UnauthorizedAccessException or IOException) { issues.Add(new ScanIssue(directory, ex.Message)); continue; }
 
             foreach (var path in children)
