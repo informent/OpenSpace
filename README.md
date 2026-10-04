@@ -6,4 +6,6 @@ Version 1.0 uses a fault-tolerant directory walker: inaccessible entries and rep
 
 Version 1.1 brings that evidence into the desktop interface. Each completed scan now distinguishes complete coverage from scans with inaccessible or reparse-point paths, shows exact file and folder counts, and exposes the first skipped-path details in the warning tooltip.
 
+Version 1.2 also checks the selected root itself for reparse points before traversal, so choosing a junction reports a skipped root instead of scanning outside the selected location.
+
 MIT licensed.
